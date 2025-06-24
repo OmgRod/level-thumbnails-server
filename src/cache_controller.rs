@@ -51,6 +51,7 @@ impl CloudflareClient {
             format!("{}/thumbnail/{}/small", self.root_url, level_id),
             format!("{}/thumbnail/{}/medium", self.root_url, level_id),
             format!("{}/thumbnail/{}/high", self.root_url, level_id),
+            format!("{}/thumbnail/{}/info", self.root_url, level_id),
         ];
 
         let endpoint = format!(
