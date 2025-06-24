@@ -1,5 +1,5 @@
 use crate::auth::UserSession;
-use crate::database;
+use crate::{cache_controller, database};
 use axum::Form;
 use axum::body::Bytes;
 use axum::extract::{Path, State};
@@ -22,7 +22,10 @@ async fn force_save(
     }?;
 
     match db.add_upload(id as i64, user.id, &image_path, true).await {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            cache_controller::purge(id as i64);
+            Ok(())
+        },
         Err(e) => Err(format!("failed to add upload entry: {}", e)),
     }
 }
@@ -310,6 +313,7 @@ pub async fn pending_action(
                         format!("Error accepting upload: {}", e),
                     );
                 }
+                cache_controller::purge(upload.level_id);
                 (StatusCode::OK, format!("Upload {} accepted", id))
             }
             Err(e) => (

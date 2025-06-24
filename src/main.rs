@@ -1,6 +1,7 @@
 use axum::{routing::get, routing::post, Router};
 
 mod auth;
+mod cache_controller;
 mod database;
 mod routes;
 

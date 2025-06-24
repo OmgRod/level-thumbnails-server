@@ -32,7 +32,6 @@ pub struct User {
 pub struct UploadInfo {
     pub account_id: i64,
     pub username: String,
-    pub image_path: String,
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
@@ -78,7 +77,7 @@ impl Database {
 
     pub async fn get_upload_info(&self, id: i64) -> Option<UploadInfo> {
         sqlx::query_as::<_, UploadInfo>(
-            "SELECT users.account_id, users.username, uploads.image_path
+            "SELECT users.account_id, users.username
                  FROM uploads
                  JOIN users ON uploads.user_id = users.id
                  WHERE uploads.level_id = $1 AND accepted = TRUE
