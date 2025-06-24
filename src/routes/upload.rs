@@ -6,6 +6,7 @@ use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
+use std::cmp::PartialEq;
 use webp::Encoder;
 
 // handler for uploading images for admins/moderators (and verified for new thumbnails) that directly saves the image
@@ -25,7 +26,7 @@ async fn force_save(
         Ok(_) => {
             cache_controller::purge(id as i64);
             Ok(())
-        },
+        }
         Err(e) => Err(format!("failed to add upload entry: {}", e)),
     }
 }
@@ -166,6 +167,7 @@ pub async fn upload(
     }
 }
 
+#[derive(PartialEq)]
 enum PendingFilter {
     All,
     ByLevel(i64),
@@ -182,7 +184,9 @@ async fn get_pending_uploads(
         Err((status, message)) => return Err((status, message)),
     };
 
-    if user.role != database::Role::Moderator && user.role != database::Role::Admin {
+    if (user.role != database::Role::Moderator && user.role != database::Role::Admin)
+        || (filter == PendingFilter::ByUser(user.id))
+    {
         return Err((
             StatusCode::FORBIDDEN,
             "Only moderators or admins can view pending uploads".to_string(),
