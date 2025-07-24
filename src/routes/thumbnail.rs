@@ -1,6 +1,6 @@
 use crate::{database, util};
 use axum::extract::{Path, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::Response;
 use image::ImageReader;
 use serde::{Deserialize, Serialize};
@@ -23,6 +23,16 @@ impl Res {
             Res::High => (1920, 1080),
             Res::Medium => (1280, 720),
             Res::Small => (640, 360),
+        }
+    }
+}
+
+impl std::fmt::Display for Res {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Res::High => write!(f, "high"),
+            Res::Medium => write!(f, "medium"),
+            Res::Small => write!(f, "small"),
         }
     }
 }
@@ -157,4 +167,44 @@ pub async fn thumbnail_info_handler(
             .unwrap(),
         None => util::str_response(StatusCode::NOT_FOUND, "Image not found"),
     }
+}
+
+pub async fn handle_random(res: Res) -> Response {
+    // pick random id from directory
+    match tokio::fs::read_dir("thumbnails").await {
+        Ok(mut entries) => {
+            let mut ids: Vec<u64> = Vec::new();
+            while let Some(entry) = entries.next_entry().await.unwrap() {
+                if let Some(name) = entry.file_name().to_str() {
+                    if let Ok(id) = name.trim_end_matches(".webp").parse::<u64>() {
+                        ids.push(id);
+                    }
+                }
+            }
+
+            if ids.is_empty() {
+                return util::str_response(StatusCode::NOT_FOUND, "No images found");
+            }
+
+            let random_id = ids[rand::random::<usize>() % ids.len()];
+            let url = format!("/thumbnail/{}/{}", random_id, res.to_string());
+            Response::builder()
+                .status(StatusCode::FOUND)
+                .header(header::LOCATION, url)
+                .body("".into())
+                .unwrap()
+        }
+        Err(e) => util::str_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            &format!("Failed to get thumbnails: {}", e),
+        ),
+    }
+}
+
+pub async fn random_handler() -> Response {
+    handle_random(Res::High).await
+}
+
+pub async fn random_res_handler(Path(res): Path<Res>) -> Response {
+    handle_random(res).await
 }

@@ -31,6 +31,8 @@ async fn main() {
         .route("/thumbnail/{id}", get(thumbnail::image_handler_default))
         .route("/thumbnail/{id}/{res}", get(thumbnail::image_handler_with_res))
         .route("/thumbnail/{id}/info", get(thumbnail::thumbnail_info_handler))
+        .route("/thumbnail/random", get(thumbnail::random_handler))
+        .route("/thumbnail/random/{res}", get(thumbnail::random_res_handler))
         // /auth
         .route("/auth/login", post(login::login))
         // /user

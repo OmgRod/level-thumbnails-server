@@ -1,6 +1,6 @@
 use crate::{database, util};
-use axum::http::{StatusCode, header, HeaderMap};
 use axum::extract::{Path, State};
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
 
 pub async fn get_user_info(id: i64, db: &database::Database) -> Response {
