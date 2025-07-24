@@ -4,6 +4,7 @@ mod auth;
 mod cache_controller;
 mod database;
 mod routes;
+mod util;
 
 use routes::{login, thumbnail, upload};
 
