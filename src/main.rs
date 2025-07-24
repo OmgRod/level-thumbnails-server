@@ -33,6 +33,9 @@ async fn main() {
         .route("/thumbnail/{id}/info", get(thumbnail::thumbnail_info_handler))
         // /auth
         .route("/auth/login", post(login::login))
+        // /user
+        .route("/user/me", get(routes::user::get_me))
+        .route("/user/{id}", get(routes::user::get_user_by_id))
         // /upload
         .route("/upload/{id}", post(upload::upload))
         // /pending

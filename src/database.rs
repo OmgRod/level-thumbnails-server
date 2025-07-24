@@ -55,6 +55,19 @@ pub struct PendingUpload {
     pub upload_time: NaiveDateTime,
 }
 
+#[derive(FromRow, Serialize, Deserialize)]
+pub struct UserStats {
+    pub id: i64,
+    pub account_id: i64,
+    pub username: String,
+    pub role: Role,
+    pub upload_count: i64,
+    pub accepted_upload_count: i64,
+    pub level_count: i64,
+    pub accepted_level_count: i64,
+    pub active_thumbnail_count: i64,
+}
+
 impl Database {
     pub async fn new() -> Self {
         let connection_string = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -238,6 +251,41 @@ impl Database {
             .execute(&*self.pool)
             .await?;
         Ok(())
+    }
+
+    pub async fn get_user_stats(&self, id: i64) -> Option<UserStats> {
+        sqlx::query_as::<_, UserStats>(
+            "SELECT
+                users.id, users.account_id,
+                users.username, users.role,
+                COUNT(uploads.id) AS upload_count,
+                COUNT(DISTINCT uploads.level_id) AS level_count,
+                COUNT(uploads.id) FILTER (WHERE uploads.accepted = TRUE) AS accepted_upload_count,
+                COUNT(DISTINCT uploads.level_id) FILTER (WHERE uploads.accepted = TRUE) AS accepted_level_count,
+                (
+                  SELECT COUNT(*)
+                  FROM (
+                    SELECT u.level_id
+                    FROM uploads u
+                    WHERE u.accepted = TRUE
+                    AND u.user_id = users.id
+                    AND u.upload_time = (
+                      SELECT MAX(u2.upload_time)
+                      FROM uploads u2
+                      WHERE u2.level_id = u.level_id
+                        AND u2.accepted = TRUE
+                    )
+                  ) active_levels
+                ) AS active_thumbnail_count
+              FROM users
+              LEFT JOIN uploads ON users.id = uploads.user_id
+              WHERE users.id = $1
+              GROUP BY users.id, users.account_id, users.username, users.role",
+        )
+        .bind(id)
+        .fetch_optional(&*self.pool)
+        .await
+        .ok()?
     }
 }
 
