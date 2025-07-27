@@ -29,10 +29,7 @@ impl CloudflareClient {
         let root_url = dotenv::var("HOME_URL").expect("HOME_URL must be set in the environment");
 
         let client = reqwest::ClientBuilder::new()
-            .user_agent(format!(
-                "level-thumbnails-server/{}",
-                env!("CARGO_PKG_VERSION")
-            ))
+            .user_agent(format!("level-thumbnails-server/{}", env!("CARGO_PKG_VERSION")))
             .timeout(std::time::Duration::from_secs(10))
             .build()
             .expect("Failed to create HTTP client");
@@ -54,19 +51,12 @@ impl CloudflareClient {
             format!("{}/thumbnail/{}/info", self.root_url, level_id),
         ];
 
-        let endpoint = format!(
-            "https://api.cloudflare.com/client/v4/zones/{}/purge_cache",
-            self.zone_id
-        );
+        let endpoint =
+            format!("https://api.cloudflare.com/client/v4/zones/{}/purge_cache", self.zone_id);
 
         let payload = serde_json::json!({ "files": urls });
-        let response = self
-            .client
-            .post(&endpoint)
-            .bearer_auth(&self.api_token)
-            .json(&payload)
-            .send()
-            .await;
+        let response =
+            self.client.post(&endpoint).bearer_auth(&self.api_token).json(&payload).send().await;
 
         let response = match response {
             Ok(resp) => resp,
@@ -100,10 +90,7 @@ pub fn purge(level_id: i64) {
         for attempt in 1..=max_retries {
             match CloudflareClient::get().purge_thumbnail(level_id).await {
                 Ok(_) => {
-                    println!(
-                        "Purge for id {} succeeded after {} attempt(s)",
-                        level_id, attempt
-                    );
+                    println!("Purge for id {} succeeded after {} attempt(s)", level_id, attempt);
                     return;
                 }
                 Err(e) => {

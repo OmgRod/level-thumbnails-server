@@ -78,14 +78,9 @@ impl Database {
             .expect("Failed to connect to the database");
 
         // Run migrations if needed
-        sqlx::migrate!("./migrations")
-            .run(&pool)
-            .await
-            .expect("Failed to run migrations");
+        sqlx::migrate!("./migrations").run(&pool).await.expect("Failed to run migrations");
 
-        Database {
-            pool: Arc::new(pool),
-        }
+        Database { pool: Arc::new(pool) }
     }
 
     pub async fn get_upload_info(&self, id: i64) -> Option<UploadInfo> {

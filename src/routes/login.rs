@@ -1,9 +1,9 @@
 use crate::{auth, database, util};
 use auth::UserSession;
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::Response;
-use axum::Json;
 use serde::Deserialize;
 use serde_json::json;
 
@@ -38,12 +38,7 @@ pub async fn login(
 ) -> Response {
     // Validate argon token
     let verdict = match auth::ArgonClient::get()
-        .verify(
-            payload.account_id,
-            payload.user_id,
-            &payload.username,
-            &payload.argon_token,
-        )
+        .verify(payload.account_id, payload.user_id, &payload.username, &payload.argon_token)
         .await
     {
         Ok(verdict) => verdict,
@@ -62,10 +57,7 @@ pub async fn login(
     // Find or create entry in the database
     match verdict {
         auth::Verdict::Strong => {
-            match db
-                .find_or_create_user(payload.account_id, &payload.username)
-                .await
-            {
+            match db.find_or_create_user(payload.account_id, &payload.username).await {
                 Ok(user) => util::response(
                     StatusCode::OK,
                     json!({

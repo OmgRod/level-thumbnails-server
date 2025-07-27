@@ -1,4 +1,4 @@
-use crate::{util, cache_controller, database};
+use crate::{cache_controller, database, util};
 use axum::Form;
 use axum::body::Bytes;
 use axum::extract::{Path, State};
@@ -33,10 +33,7 @@ fn process_image(data: &[u8]) -> Result<Vec<u8>, String> {
     let image = image::load_from_memory(data).map_err(|e| format!("Invalid image data: {}", e))?;
 
     if image.width() != IMAGE_WIDTH || image.height() != IMAGE_HEIGHT {
-        return Err(format!(
-            "Image must be exactly {}x{}",
-            IMAGE_WIDTH, IMAGE_HEIGHT
-        ));
+        return Err(format!("Image must be exactly {}x{}", IMAGE_WIDTH, IMAGE_HEIGHT));
     }
 
     let rgb_data = image.into_rgb8();
@@ -291,10 +288,7 @@ pub async fn pending_action(
     };
 
     if upload.accepted {
-        return util::str_response(
-            StatusCode::CONFLICT,
-            "This upload has already been accepted",
-        );
+        return util::str_response(StatusCode::CONFLICT, "This upload has already been accepted");
     }
 
     let old_image_path = format!("uploads/{}_{}.webp", upload.user_id, upload.level_id);
@@ -310,10 +304,7 @@ pub async fn pending_action(
             );
         }
 
-        if let Err(e) = db
-            .accept_upload(upload.id, user.id, action.reason, true)
-            .await
-        {
+        if let Err(e) = db.accept_upload(upload.id, user.id, action.reason, true).await {
             return util::str_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 &format!("Error accepting upload: {}", e),
@@ -331,10 +322,7 @@ pub async fn pending_action(
             );
         }
 
-        if let Err(e) = db
-            .accept_upload(upload.id, user.id, action.reason, false)
-            .await
-        {
+        if let Err(e) = db.accept_upload(upload.id, user.id, action.reason, false).await {
             return util::str_response(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 &format!("Error rejecting upload: {}", e),
@@ -380,10 +368,7 @@ pub async fn get_pending_image(
         .header(header::CONTENT_TYPE, "image/webp")
         .header(
             header::CONTENT_DISPOSITION,
-            format!(
-                "inline; filename=\"pending_{}_{}.webp\"",
-                upload.user_id, id
-            ),
+            format!("inline; filename=\"pending_{}_{}.webp\"", upload.user_id, id),
         )
         .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
         .header(header::CONTENT_LENGTH, image_data.len())

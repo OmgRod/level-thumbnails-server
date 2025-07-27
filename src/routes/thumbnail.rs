@@ -40,10 +40,7 @@ impl std::fmt::Display for Res {
 fn image_response(image_data: Vec<u8>, id: u64, upload_info: &database::UploadInfo) -> Response {
     Response::builder()
         .header(header::CONTENT_TYPE, "image/webp")
-        .header(
-            header::CONTENT_DISPOSITION,
-            format!("inline; filename=\"{}.webp\"", id),
-        )
+        .header(header::CONTENT_DISPOSITION, format!("inline; filename=\"{}.webp\"", id))
         .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
         .header(header::CONTENT_LENGTH, image_data.len())
         .header("X-Level-ID", id.to_string())
@@ -81,20 +78,14 @@ async fn resize_image(image_path: PathBuf, target_res: Res) -> Result<Vec<u8>, R
             .decode()
             .map_err(|e| format!("Failed to decode image: {}", e))?;
 
-        let resized_image = image
-            .resize_exact(width, height, image::imageops::FilterType::Lanczos3)
-            .to_rgb8();
+        let resized_image =
+            image.resize_exact(width, height, image::imageops::FilterType::Lanczos3).to_rgb8();
 
-        Ok(Encoder::from_rgb(&resized_image, width, height)
-            .encode_lossless()
-            .to_vec())
+        Ok(Encoder::from_rgb(&resized_image, width, height).encode_lossless().to_vec())
     })
     .await
     .map_err(|e| {
-        util::str_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            &format!("Task join error: {}", e),
-        )
+        util::str_response(StatusCode::INTERNAL_SERVER_ERROR, &format!("Task join error: {}", e))
     })?
     .map_err(|e| {
         util::str_response(

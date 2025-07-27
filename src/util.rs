@@ -31,16 +31,10 @@ pub async fn auth_middleware(
         Some(token) => match UserSession::from_jwt(token) {
             Ok(session) => match db.get_user_by_id(session.id).await {
                 Some(user) => Ok(user),
-                None => Err(str_response(
-                    StatusCode::FORBIDDEN,
-                    "User not found"
-                )),
+                None => Err(str_response(StatusCode::FORBIDDEN, "User not found")),
             },
             Err(e) => Err(str_response(StatusCode::UNAUTHORIZED, &e.to_string())),
         },
-        None => Err(str_response(
-            StatusCode::UNAUTHORIZED,
-            "Missing Authorization header",
-        )),
+        None => Err(str_response(StatusCode::UNAUTHORIZED, "Missing Authorization header")),
     }
 }

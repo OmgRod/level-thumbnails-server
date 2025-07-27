@@ -13,11 +13,7 @@ pub struct UserSession {
 
 impl UserSession {
     pub fn new(id: i64, gd_id: i64, username: String) -> Self {
-        Self {
-            id,
-            gd_id,
-            username,
-        }
+        Self { id, gd_id, username }
     }
 
     pub fn to_jwt(&self) -> String {
@@ -32,11 +28,7 @@ impl UserSession {
 
     pub fn from_jwt(token: &str) -> Result<Self, jsonwebtoken::errors::Error> {
         // strip the "Bearer " prefix if it exists
-        let token = if token.starts_with("Bearer ") {
-            &token[7..]
-        } else {
-            token
-        };
+        let token = if token.starts_with("Bearer ") { &token[7..] } else { token };
 
         let mut validation = jsonwebtoken::Validation::default();
         validation.validate_exp = false;
@@ -123,10 +115,7 @@ impl ArgonClient {
         let base_url = dotenv::var("ARGON_BASE_URL")
             .unwrap_or_else(|_| "https://argon.globed.dev/v1".to_string());
         let client = reqwest::ClientBuilder::new()
-            .user_agent(format!(
-                "level-thumbnails-server/{}",
-                env!("CARGO_PKG_VERSION")
-            ))
+            .user_agent(format!("level-thumbnails-server/{}", env!("CARGO_PKG_VERSION")))
             .timeout(std::time::Duration::from_secs(10))
             .build()
             .expect("Failed to create HTTP client");
@@ -165,13 +154,9 @@ impl ArgonClient {
         };
 
         if !response.valid_weak {
-            Ok(Verdict::Invalid(
-                response.cause.unwrap_or_else(|| "unknown".to_owned()),
-            ))
+            Ok(Verdict::Invalid(response.cause.unwrap_or_else(|| "unknown".to_owned())))
         } else if !response.valid {
-            Ok(Verdict::Weak(
-                response.username.unwrap_or_else(|| "<unknown>".to_owned()),
-            ))
+            Ok(Verdict::Weak(response.username.unwrap_or_else(|| "<unknown>".to_owned())))
         } else {
             Ok(Verdict::Strong)
         }
