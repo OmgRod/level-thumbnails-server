@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400..700;1,400..700&family=Alata&display=swap');
+
+:root {
+    font-family: "Alata", system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: dark;
+    color: rgba(255, 255, 255);
+
+    --bg-grad-start: #061932;
+    --bg-grad-end: #0a0a0a;
+    --bg-grad-angle: 45deg;
+
+    background-image: linear-gradient(
+            var(--bg-grad-angle),
+            var(--bg-grad-start),
+            var(--bg-grad-end)
+    );
+    background-attachment: fixed;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
