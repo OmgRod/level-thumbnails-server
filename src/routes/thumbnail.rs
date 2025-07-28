@@ -177,7 +177,7 @@ pub async fn handle_random(res: Res) -> Response {
                 return util::str_response(StatusCode::NOT_FOUND, "No images found");
             }
 
-            let random_id = ids[rand::random::<usize>() % ids.len()];
+            let random_id = ids[rand::random::<u64>() as usize % ids.len()];
             let url = format!("/thumbnail/{}/{}", random_id, res.to_string());
             Response::builder()
                 .status(StatusCode::FOUND)

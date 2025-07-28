@@ -1,6 +1,7 @@
 /target
 /thumbnails
 /uploads
+/dist
 /.idea
 /.vscode
 /.DS_Store

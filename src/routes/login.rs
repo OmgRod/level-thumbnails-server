@@ -64,7 +64,7 @@ pub async fn login(
                         "status": StatusCode::OK.as_u16(),
                         "message": "User authenticated successfully",
                         "user": user,
-                        "token": UserSession::new(user.id, user.account_id, payload.username).to_jwt(),
+                        "token": UserSession::new(user.id, payload.username).to_jwt(),
                     }),
                 ),
                 Err(e) => util::response(

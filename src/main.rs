@@ -1,4 +1,8 @@
+use std::path::Path;
+use axum::response::Response;
 use axum::{Router, routing::get, routing::post};
+use tower_http::cors;
+use tower_http::services::{ServeDir, ServeFile};
 
 mod auth;
 mod cache_controller;
@@ -17,16 +21,15 @@ async fn main() {
     tokio::fs::create_dir_all("thumbnails").await.unwrap();
     tokio::fs::create_dir_all("uploads").await.unwrap();
 
-    let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
-        .allow_methods(tower_http::cors::Any)
-        .allow_headers(tower_http::cors::Any);
+    let cors = cors::CorsLayer::new()
+        .allow_origin(cors::Any)
+        .allow_methods(cors::Any)
+        .allow_headers(cors::Any);
 
     let db = database::get_db().await;
 
     let app = Router::new()
-        .route("/", get(root))
-        // .route("/stats", get(get_stats))
+        .route("/stats", get(get_stats))
         // /thumbnail
         .route("/thumbnail/{id}", get(thumbnail::image_handler_default))
         .route("/thumbnail/{id}/{res}", get(thumbnail::image_handler_with_res))
@@ -38,6 +41,9 @@ async fn main() {
         // /user
         .route("/user/me", get(routes::user::get_me))
         .route("/user/{id}", get(routes::user::get_user_by_id))
+        // .route("/user/me/uploads", get(routes::user::get_my_uploads))
+        // .route("/user/{id}/uploads", get(routes::user::get_user_uploads))
+        .route("/user/link", get(routes::user::discord_oauth_handler))
         // /upload
         .route("/upload/{id}", post(upload::upload))
         // /pending
@@ -52,27 +58,44 @@ async fn main() {
         // .route("/admin/user/:id", get(routes::admin::get_user_by_id))
         // .route("/admin/user/:id", patch(routes::admin::update_user))
         // .route("/admin/ban/:id", post(routes::admin::ban_user))
+        // .route("/admin/thumbnail/:id", delete(routes::admin::delete_thumbnail))
         .with_state(db)
-        .layer(cors);
+        .layer(cors)
+        .fallback_service(ServeDir::new("dist").fallback(ServeFile::new("dist/index.html")));
 
     let bind_address = dotenv::var("BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:3000".to_string());
     let listener = tokio::net::TcpListener::bind(bind_address).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn root() -> &'static str {
-    r"
-  _                    _   _______ _                     _                 _ _
- | |                  | | |__   __| |                   | |               (_) |
- | |     _____   _____| |    | |  | |__  _   _ _ __ ___ | |__  _ __   __ _ _| |___
- | |    / _ \ \ / / _ \ |    | |  | '_ \| | | | '_ ` _ \| '_ \| '_ \ / _` | | / __|
- | |___|  __/\ V /  __/ |    | |  | | | | |_| | | | | | | |_) | | | | (_| | | \__ \
- |______\___| \_/ \___|_|    |_|  |_| |_|\__,_|_| |_| |_|_.__/|_| |_|\__,_|_|_|___/
-  / ____|                          (_)                 | |
- | (___   ___ _ ____   _____ _ __   _ ___   _   _ _ __ | |
-  \___ \ / _ \ '__\ \ / / _ \ '__| | / __| | | | | '_ \| |
-  ____) |  __/ |   \ V /  __/ |    | \__ \ | |_| | |_) |_|
- |_____/ \___|_|    \_/ \___|_|    |_|___/  \__,_| .__/(_)
-                                                 | |
-                                                 |_|                               "
+async fn get_dir_stats(path: &Path) -> Result<(u64, usize), std::io::Error> {
+    let mut entries = tokio::fs::read_dir(path).await?;
+    let mut total_size = 0;
+    let mut file_count = 0;
+
+    while let Some(entry) = entries.next_entry().await? {
+        let metadata = entry.metadata().await?;
+        file_count += 1;
+        total_size += metadata.len();
+    }
+
+    Ok((total_size, file_count))
+}
+
+async fn get_stats() -> Response {
+    let (storage_size, thumbnails_count) = match get_dir_stats(Path::new("thumbnails")).await {
+        Ok((size, count)) => (size, count),
+        Err(_) => (0, 0),
+    };
+
+    let users_per_month = 3292188; // TODO: Fetch this from Cloudflare API
+
+    util::response(
+        axum::http::StatusCode::OK,
+        serde_json::json!({
+            "storage": storage_size,
+            "thumbnails": thumbnails_count,
+            "users_per_month": users_per_month,
+        }),
+    )
 }

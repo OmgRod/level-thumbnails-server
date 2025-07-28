@@ -148,6 +148,47 @@ impl Database {
         }
     }
 
+    pub async fn find_or_create_user_discord(
+        &self,
+        discord_id: &str,
+        username: &str,
+    ) -> Result<User, sqlx::Error> {
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE discord_id = $1")
+            .bind(discord_id)
+            .fetch_optional(&*self.pool)
+            .await?;
+
+        if let Some(user) = user {
+            Ok(user)
+        } else {
+            // first check if we can link to existing legacy account
+            let legacy_user = sqlx::query_as::<_, User>(
+                "SELECT * FROM users WHERE account_id = -1 AND username = $1 AND discord_id IS NULL",
+            )
+            .bind(username)
+            .fetch_optional(&*self.pool)
+            .await?;
+            if let Some(legacy_user) = legacy_user {
+                // update the legacy user with the discord_id
+                sqlx::query("UPDATE users SET discord_id = $1 WHERE id = $2")
+                    .bind(discord_id)
+                    .bind(legacy_user.id)
+                    .execute(&*self.pool)
+                    .await?;
+                return Ok(legacy_user);
+            }
+            // if no legacy user found, create a new user
+            let new_user = sqlx::query_as::<_, User>(
+                "INSERT INTO users (account_id, username, role, discord_id) VALUES (-1, $1, 'user', $2) RETURNING *",
+            )
+            .bind(username)
+            .bind(discord_id)
+            .fetch_one(&*self.pool)
+            .await?;
+            Ok(new_user)
+        }
+    }
+
     pub async fn get_user_by_id(&self, id: i64) -> Option<User> {
         sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
             .bind(id)

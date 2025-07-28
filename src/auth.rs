@@ -4,16 +4,13 @@ use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserSession {
-    #[serde(rename = "userId")]
     pub id: i64,
-    #[serde(rename = "gdId")]
-    pub gd_id: i64,
     pub username: String,
 }
 
 impl UserSession {
-    pub fn new(id: i64, gd_id: i64, username: String) -> Self {
-        Self { id, gd_id, username }
+    pub fn new(id: i64, username: String) -> Self {
+        Self { id, username }
     }
 
     pub fn to_jwt(&self) -> String {

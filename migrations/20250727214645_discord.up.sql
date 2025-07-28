@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN discord_id VARCHAR(255) NULL;
+ALTER TABLE users DROP CONSTRAINT users_username_key;
