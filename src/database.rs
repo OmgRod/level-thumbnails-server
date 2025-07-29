@@ -20,12 +20,24 @@ pub enum Role {
     Admin,     // admins can manage users and uploads
 }
 
+impl std::fmt::Display for Role {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Role::User => write!(f, "user"),
+            Role::Verified => write!(f, "verified"),
+            Role::Moderator => write!(f, "moderator"),
+            Role::Admin => write!(f, "admin"),
+        }
+    }
+}
+
 #[derive(Debug, FromRow, Serialize)]
 pub struct User {
     pub id: i64,
     pub account_id: i64,
     pub username: String,
     pub role: Role,
+    pub discord_id: Option<String>,
 }
 
 #[derive(FromRow)]

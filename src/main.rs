@@ -10,7 +10,7 @@ mod database;
 mod routes;
 mod util;
 
-use routes::{login, thumbnail, upload};
+use routes::{login, thumbnail, upload, user};
 
 #[tokio::main]
 async fn main() {
@@ -38,12 +38,13 @@ async fn main() {
         .route("/thumbnail/random/{res}", get(thumbnail::random_res_handler))
         // /auth
         .route("/auth/login", post(login::login))
+        .route("/auth/discord", get(login::discord_oauth_handler))
+        .route("/auth/session", get(login::get_session))
         // /user
-        .route("/user/me", get(routes::user::get_me))
-        .route("/user/{id}", get(routes::user::get_user_by_id))
+        .route("/user/me", get(user::get_me))
+        .route("/user/{id}", get(user::get_user_by_id))
         // .route("/user/me/uploads", get(routes::user::get_my_uploads))
         // .route("/user/{id}/uploads", get(routes::user::get_user_uploads))
-        .route("/user/link", get(routes::user::discord_oauth_handler))
         // /upload
         .route("/upload/{id}", post(upload::upload))
         // /pending
