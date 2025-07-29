@@ -5,7 +5,7 @@ const images = ref<string[][]>([]);
 onMounted(() => {
   const imageUrls = [];
   for (let i = 1; i <= 25; i++) {
-    imageUrls.push(`https://levelthumbs.prevter.me/thumbnail/random/small?t=${i}`);
+    imageUrls.push(`/thumbnail/random/small?t=${i}`);
   }
   for (let i = 0; i < 3; i++) {
     images.value.push(imageUrls.slice(i * 5, i * 5 + 5));

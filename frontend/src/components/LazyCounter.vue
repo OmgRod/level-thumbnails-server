@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, type Ref } from 'vue';
+import {ref, onMounted, onBeforeUnmount, watch, type Ref} from 'vue';
 
 function useInView(targetRef: Ref<Element | null>, options: IntersectionObserverInit = {}) {
   const isVisible = ref(false);
@@ -9,7 +9,7 @@ function useInView(targetRef: Ref<Element | null>, options: IntersectionObserver
     observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         isVisible.value = true;
-        observer?.disconnect(); // Run only once
+        observer?.disconnect();
       }
     }, options);
     if (targetRef.value) observer.observe(targetRef.value);
@@ -17,7 +17,7 @@ function useInView(targetRef: Ref<Element | null>, options: IntersectionObserver
 
   onBeforeUnmount(() => observer?.disconnect());
 
-  return { isVisible };
+  return {isVisible};
 }
 
 function animateCounter(
@@ -45,12 +45,12 @@ function animateCounter(
 const props = defineProps<{
   value: number;
   duration?: number;
-  decimals?: number;  // <-- number of decimal places
+  decimals?: number;
 }>();
 
 const counter = ref(0);
 const statSection = ref<HTMLElement | null>(null);
-const { isVisible } = useInView(statSection, { threshold: 0.1 });
+const {isVisible} = useInView(statSection, {threshold: 0.1});
 
 // We use a single watch for visibility and value changes
 watch(isVisible, (visible) => {
@@ -73,6 +73,11 @@ watch(() => props.value, (newValue) => {
 
 <template>
   <span ref="statSection" class="counter">
-    {{ counter.toLocaleString(undefined, { minimumFractionDigits: props.decimals ?? 0, maximumFractionDigits: props.decimals ?? 0 }) }}
+    {{
+      counter.toLocaleString(undefined, {
+        minimumFractionDigits: props.decimals ?? 0,
+        maximumFractionDigits: props.decimals ?? 0
+      })
+    }}
   </span>
 </template>

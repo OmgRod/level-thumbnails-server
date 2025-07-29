@@ -1,13 +1,19 @@
 <script setup lang="ts">
+import {ref} from 'vue';
+import {useRouter} from 'vue-router'
+import SessionManager from "../managers/session.ts";
+
 import MosaicGrid from "../components/MosaicGrid.vue";
 import Button from "../components/Button.vue";
 import LazyCounter from "../components/LazyCounter.vue";
+import Container from "../components/Container.vue";
+import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
 
 const CLIENT_ID = "1398022313877704764";
-const REDIRECT_URI = "http://localhost:3000/user/link";
+const REDIRECT_URI = "http://localhost:3000/auth/discord";
 const DISCORD_AUTH_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=identify`;
 
-import { ref } from 'vue';
 const stats = ref({
   storage: 0,
   storage_size: "GB",
@@ -30,67 +36,81 @@ function convertStorageSize(size: number): number {
 }
 
 fetch('/stats')
-  .then(response => response.json())
-  .then(data => {
-    let storageSize = data.storage;
-    stats.value.storage = convertStorageSize(storageSize);
-    stats.value.storage_size = determineStorageUnit(storageSize);
-    stats.value.thumbnails = data.thumbnails;
-    stats.value.users_per_month = data.users_per_month;
-  })
-  .catch(error => console.error('Error fetching stats:', error));
+    .then(response => response.json())
+    .then(data => {
+      let storageSize = data.storage;
+      stats.value.storage = convertStorageSize(storageSize);
+      stats.value.storage_size = determineStorageUnit(storageSize);
+      stats.value.thumbnails = data.thumbnails;
+      stats.value.users_per_month = data.users_per_month;
+    })
+    .catch(error => console.error('Error fetching stats:', error));
+
+const router = useRouter();
+
+function trySignIn() {
+  if (SessionManager.isAuthenticated()) {
+    router.push('/dashboard');
+  } else {
+    window.location.href = DISCORD_AUTH_URL;
+  }
+}
 
 </script>
 
 <template>
-  <div class="container main-container mt-4">
-    <MosaicGrid class="mosaic-grid"/>
-    <div class="inner">
-      <div class="backdrop">
-        <h1>Level Thumbnails</h1>
-        <p>
-          <Button url="https://geode-sdk.org/mods/cdc.level_thumbnails" isDark>
-            Install on Geode
-          </Button>
-        </p>
-        <p>
-          <Button :url="DISCORD_AUTH_URL">
-            Sign In
-          </Button>
-        </p>
-      </div>
-    </div>
-  </div>
-  <div class="dark-bg mt-4">
-    <div class="container">
-      <h2>Statistics</h2>
-      <div class="stats-container">
-        <div class="stat-item">
-          <img src="/storage.svg"/>
-          <strong>
-            <LazyCounter :value="stats.storage" :decimals="1"/>
-            {{ stats.storage_size }}
-          </strong>
-          of images stored
-        </div>
-        <div class="stat-item">
-          <img src="/logo.svg"/>
-          <strong>
-            <LazyCounter :value="stats.thumbnails"/>
-          </strong>
-          levels with thumbnails
-        </div>
-        <div class="stat-item">
-          <img src="/user.svg"/>
-          <strong>
-            <LazyCounter :value="stats.users_per_month / 1_000_000" :decimals="2"/>
-            million
-          </strong>
-          unique users per month
+  <Header/>
+  <main>
+    <Container class="main-container mt-4 text-center">
+      <MosaicGrid class="mosaic-grid"/>
+      <div class="inner">
+        <div class="backdrop">
+          <h1>Level Thumbnails</h1>
+          <p>
+            <Button url="https://geode-sdk.org/mods/cdc.level_thumbnails" newTab>
+              Install on Geode
+            </Button>
+          </p>
+          <p>
+            <Button @click="trySignIn()" isDark>
+              Sign In
+            </Button>
+          </p>
         </div>
       </div>
+    </Container>
+    <div class="dark-bg mt-4">
+      <Container class="text-center">
+        <h2>Statistics</h2>
+        <div class="stats-container">
+          <div class="stat-item">
+            <img src="/storage.svg"/>
+            <strong>
+              <LazyCounter :value="stats.storage" :decimals="1"/>
+              {{ stats.storage_size }}
+            </strong>
+            of images stored
+          </div>
+          <div class="stat-item">
+            <img src="/logo.svg"/>
+            <strong>
+              <LazyCounter :value="stats.thumbnails"/>
+            </strong>
+            levels with thumbnails
+          </div>
+          <div class="stat-item">
+            <img src="/user.svg"/>
+            <strong>
+              <LazyCounter :value="stats.users_per_month / 1_000_000" :decimals="2"/>
+              million
+            </strong>
+            unique users per month
+          </div>
+        </div>
+      </Container>
     </div>
-  </div>
+  </main>
+  <Footer/>
 </template>
 
 <style scoped>
@@ -100,12 +120,6 @@ fetch('/stats')
   position: relative;
   margin-top: 20px;
   width: 100%;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
 }
 
 .mosaic-grid {
@@ -143,10 +157,6 @@ h2 {
 }
 
 @media (max-width: 1200px) {
-  .container {
-    max-width: 100%;
-  }
-
   .backdrop {
     max-width: 80%;
   }
@@ -161,10 +171,6 @@ h2 {
 }
 
 @media (max-width: 800px) {
-  .container {
-    max-width: 100%;
-  }
-
   .backdrop {
     max-width: 80%;
   }
@@ -178,32 +184,9 @@ h2 {
   }
 }
 
-button {
-  background-color: #7289da;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  margin: 10px;
-}
-
-button:hover {
-  background-color: #5b6eae;
-}
-
 p {
   font-size: 1.1em;
   margin: 20px 0;
-}
-
-.mt-5 {
-  margin-top: 5rem;
-}
-
-.mt-4 {
-  margin-top: 4rem;
 }
 
 .dark-bg {

@@ -4,7 +4,7 @@
 
 <template>
   <footer class="footer">
-    <p>&copy; 2025 Level Thumbnails.</p>
+    <p>&copy; {{ new Date().getFullYear() }} Level Thumbnails.</p>
   </footer>
 </template>
 

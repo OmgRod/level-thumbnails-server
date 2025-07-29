@@ -1,12 +1,15 @@
 <script setup lang="ts">
 const props = defineProps<{
-  url: string;
+  url?: string;
   isDark?: boolean;
+  newTab?: boolean;
 }>();
+
+defineEmits(['click']);
 </script>
 
 <template>
-  <a :href="props.url" target="_blank" rel="noopener noreferrer" :class="{ 'dark-button': props.isDark }">
+  <a :href="props.url" :target="props.newTab && '_blank' || undefined" :class="{ 'dark-button': props.isDark }" @click="$emit('click')">
     <slot></slot>
   </a>
 </template>
@@ -14,9 +17,9 @@ const props = defineProps<{
 <style scoped>
 a {
   font-family: "Afacad", "Alata", system-ui, Avenir, Helvetica, Arial, sans-serif;
-  background-color: #000000;
-  color: white;
-  border: 2px solid #ffffff;
+  background-color: #ffffff;
+  color: black;
+  border: 2px solid #000000;
   border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
@@ -29,9 +32,9 @@ a {
 }
 
 .dark-button {
-  background-color: #ffffff;
-  color: #000000;
-  border-color: #000000;
+  background-color: #000000;
+  color: #ffffff;
+  border-color: #ffffff;
 }
 
 a:hover {
