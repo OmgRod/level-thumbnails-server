@@ -3,6 +3,8 @@ use axum::response::Response;
 use axum::{Router, routing::get, routing::post};
 use tower_http::cors;
 use tower_http::services::{ServeDir, ServeFile};
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing::{info};
 
 mod auth;
 mod cache_controller;
@@ -16,6 +18,16 @@ use routes::{login, thumbnail, upload, user};
 async fn main() {
     // parse .env file
     dotenv::dotenv().ok();
+
+    // setup logging
+    let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "server.log");
+    let (non_blocking_logger, _guard) = tracing_appender::non_blocking(file_appender);
+
+    tracing_subscriber::fmt()
+        .with_writer(non_blocking_logger)
+        .with_ansi(false)
+        .init();
+
 
     // setup directories
     tokio::fs::create_dir_all("thumbnails").await.unwrap();
@@ -40,6 +52,8 @@ async fn main() {
         .route("/auth/login", post(login::login))
         .route("/auth/discord", get(login::discord_oauth_handler))
         .route("/auth/session", get(login::get_session))
+        .route("/auth/link", get(login::get_link_token))
+        .route("/auth/link", post(login::link_account))
         // /user
         .route("/user/me", get(user::get_me))
         .route("/user/{id}", get(user::get_user_by_id))
@@ -66,6 +80,8 @@ async fn main() {
 
     let bind_address = dotenv::var("BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:3000".to_string());
     let listener = tokio::net::TcpListener::bind(bind_address).await.unwrap();
+
+    info!("Started server!");
     axum::serve(listener, app).await.unwrap();
 }
 

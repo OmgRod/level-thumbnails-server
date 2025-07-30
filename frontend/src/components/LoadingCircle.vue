@@ -6,7 +6,6 @@ const props = defineProps<{
 
 const style = {
   width: props.size ? `${props.size}px` : '6em',
-  height: props.size ? `${props.size}px` : '6em',
 };
 
 </script>

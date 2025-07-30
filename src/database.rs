@@ -37,7 +37,7 @@ pub struct User {
     pub account_id: i64,
     pub username: String,
     pub role: Role,
-    pub discord_id: Option<String>,
+    pub discord_id: Option<i64>,
 }
 
 #[derive(FromRow)]
@@ -334,6 +334,25 @@ impl Database {
         .fetch_optional(&*self.pool)
         .await
         .ok()?
+    }
+
+    pub async fn migrate_user_account(
+        &self,
+        old_account_id: i64,
+        new_account_id: i64,
+    ) -> Result<User, sqlx::Error> {
+        sqlx::query("CALL migrate($1, $2)")
+            .bind(new_account_id)
+            .bind(old_account_id)
+            .execute(&*self.pool)
+            .await?;
+
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+            .bind(new_account_id)
+            .fetch_one(&*self.pool)
+            .await?;
+
+        Ok(user)
     }
 }
 

@@ -2,11 +2,12 @@ use crate::{auth, database, util};
 use auth::UserSession;
 use axum::Json;
 use axum::extract::{Query, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::env;
+use tracing::info;
 
 #[derive(Deserialize, Debug)]
 pub struct LoginPayload {
@@ -14,6 +15,7 @@ pub struct LoginPayload {
     user_id: i64,
     username: String,
     argon_token: String,
+    discord_token: Option<String>,
 }
 
 fn handle_verdict_error(verdict: auth::Verdict) -> Response {
@@ -37,6 +39,9 @@ pub async fn login(
     State(db): State<database::Database>,
     Json(payload): Json<LoginPayload>,
 ) -> Response {
+    info!("Login attempt: account_id={}, user_id={}, username={}",
+         payload.account_id, payload.user_id, payload.username);
+
     // Validate argon token
     let verdict = match auth::ArgonClient::get()
         .verify(payload.account_id, payload.user_id, &payload.username, &payload.argon_token)
@@ -183,10 +188,7 @@ pub async fn discord_oauth_handler(
     }
 }
 
-pub async fn get_session(
-    headers: axum::http::HeaderMap,
-    State(db): State<database::Database>,
-) -> Response {
+pub async fn get_session(headers: HeaderMap, State(db): State<database::Database>) -> Response {
     match util::auth_middleware(&headers, &db).await {
         Ok(user) => util::response(
             StatusCode::OK,
@@ -195,6 +197,102 @@ pub async fn get_session(
                 "user": user,
             }),
         ),
+        Err(response) => response,
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct LinkToken {
+    id: i64,
+    exp: u64,
+}
+
+pub async fn get_link_token(headers: HeaderMap, State(db): State<database::Database>) -> Response {
+    match util::auth_middleware(&headers, &db).await {
+        Ok(user) => {
+            if user.account_id != -1 {
+                return util::str_response(
+                    StatusCode::BAD_REQUEST,
+                    "You already have a Geometry Dash account linked",
+                );
+            }
+
+            let link_token = LinkToken {
+                id: user.id,
+                exp: (chrono::Utc::now() + chrono::Duration::minutes(10)).timestamp() as u64,
+            };
+
+            let jwt_secret = dotenv::var("JWT_SECRET").expect("JWT_SECRET must be set");
+            let token = jsonwebtoken::encode(
+                &jsonwebtoken::Header::default(),
+                &link_token,
+                &jsonwebtoken::EncodingKey::from_secret(jwt_secret.as_bytes()),
+            )
+            .expect("Failed to encode JWT");
+
+            util::response(
+                StatusCode::OK,
+                json!({
+                    "status": StatusCode::OK.as_u16(),
+                    "message": "Link token generated successfully",
+                    "token": token,
+                }),
+            )
+        }
+        Err(response) => response,
+    }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct LinkPayload {
+    token: String,
+}
+
+async fn migrate_account(
+    db: &database::Database,
+    user_id: i64, // Geometry Dash user ID
+    discord_id: i64, // Discord user ID
+) -> Response {
+    match db.migrate_user_account(user_id, discord_id).await {
+        Ok(user) => util::response(StatusCode::OK, json!({
+            "status": StatusCode::OK.as_u16(),
+            "message": "Account linked successfully",
+            "user": user,
+            "token": UserSession::new(user.id, user.username.clone()).to_jwt(),
+        })),
+        Err(e) => util::str_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
+}
+
+pub async fn link_account(
+    headers: HeaderMap,
+    State(db): State<database::Database>,
+    Json(payload): Json<LinkPayload>,
+) -> Response {
+    match util::auth_middleware(&headers, &db).await {
+        Ok(user) => {
+            if user.discord_id.is_some() {
+                return util::str_response(
+                    StatusCode::BAD_REQUEST,
+                    "You already have a Discord account linked",
+                );
+            }
+
+            let jwt_secret = dotenv::var("JWT_SECRET").expect("JWT_SECRET must be set");
+            let validation = jsonwebtoken::Validation::default();
+            match jsonwebtoken::decode::<LinkToken>(
+                &payload.token,
+                &jsonwebtoken::DecodingKey::from_secret(jwt_secret.as_bytes()),
+                &validation,
+            ) {
+                Ok(decoded) => migrate_account(
+                    &db,
+                    user.id, // Geometry Dash user ID
+                    decoded.claims.id, // Discord user ID
+                ).await,
+                Err(_) => util::str_response(StatusCode::UNAUTHORIZED, "Invalid link token"),
+            }
+        }
         Err(response) => response,
     }
 }

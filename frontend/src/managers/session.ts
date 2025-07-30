@@ -5,7 +5,7 @@ export interface User {
     account_id: number;
     username: string;
     role: 'user' | 'verified' | 'moderator' | 'admin';
-    discord_id?: string | null;
+    discord_id?: number | null;
 }
 
 export default class SessionManager {

@@ -30,6 +30,7 @@ html, body {
     padding: 0;
     width: 100%;
     height: 100%;
+    touch-action: manipulation;
 }
 
 .mt-5 {
@@ -52,6 +53,52 @@ html, body {
     margin-top: 1rem;
 }
 
+.w-100 {
+    width: 100%;
+}
+
+.h-100 {
+    height: 100%;
+}
+
 .text-center {
     text-align: center;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-3 {
+    flex: 3;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.flex-middle {
+    align-items: center;
+}
+
+.gap-1 {
+    gap: 1rem;
+}
+
+.gap-2 {
+    gap: 2rem;
+}
+
+.mobile-only {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block!important;
+    }
 }
