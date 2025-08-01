@@ -39,8 +39,10 @@ pub async fn login(
     State(db): State<database::Database>,
     Json(payload): Json<LoginPayload>,
 ) -> Response {
-    info!("Login attempt: account_id={}, user_id={}, username={}",
-         payload.account_id, payload.user_id, payload.username);
+    info!(
+        "Login attempt: account_id={}, user_id={}, username={}",
+        payload.account_id, payload.user_id, payload.username
+    );
 
     // Validate argon token
     let verdict = match auth::ArgonClient::get()
@@ -167,10 +169,17 @@ pub async fn discord_oauth_handler(
         }
     };
 
-    let discord_id = user_info["id"].as_str().unwrap_or("");
-    if discord_id.is_empty() {
-        return util::str_response(StatusCode::UNAUTHORIZED, "Invalid Discord user info");
-    }
+    let discord_id: i64 = match user_info["id"].as_str() {
+        Some(id) => match id.parse::<i64>() {
+            Ok(id) => id,
+            Err(_) => {
+                return util::str_response(StatusCode::UNAUTHORIZED, "Invalid Discord user ID");
+            }
+        },
+        None => {
+            return util::str_response(StatusCode::UNAUTHORIZED, "Discord user ID not found");
+        }
+    };
 
     let username = user_info["username"].as_str().unwrap_or("");
     match db.find_or_create_user_discord(discord_id, username).await {
@@ -250,16 +259,37 @@ pub struct LinkPayload {
 
 async fn migrate_account(
     db: &database::Database,
-    user_id: i64, // Geometry Dash user ID
+    user_id: i64,    // Geometry Dash user ID
     discord_id: i64, // Discord user ID
 ) -> Response {
+    let pending = db.get_pending_uploads_for_user(user_id).await;
+
     match db.migrate_user_account(user_id, discord_id).await {
-        Ok(user) => util::response(StatusCode::OK, json!({
-            "status": StatusCode::OK.as_u16(),
-            "message": "Account linked successfully",
-            "user": user,
-            "token": UserSession::new(user.id, user.username.clone()).to_jwt(),
-        })),
+        Ok(user) => {
+            match pending {
+                Ok(uploads) => {
+                    for upload in uploads {
+                        tokio::fs::rename(
+                            format!("uploads/{}_{}.webp", user_id, upload.level_id),
+                            format!("uploads/{}_{}.webp", discord_id, upload.level_id),
+                        )
+                        .await
+                        .unwrap_or(());
+                    }
+                }
+                Err(_) => {}
+            }
+
+            util::response(
+                StatusCode::OK,
+                json!({
+                    "status": StatusCode::OK.as_u16(),
+                    "message": "Account linked successfully",
+                    "user": user,
+                    "token": UserSession::new(user.id, user.username.clone()).to_jwt(),
+                }),
+            )
+        }
         Err(e) => util::str_response(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
     }
 }
@@ -285,11 +315,14 @@ pub async fn link_account(
                 &jsonwebtoken::DecodingKey::from_secret(jwt_secret.as_bytes()),
                 &validation,
             ) {
-                Ok(decoded) => migrate_account(
-                    &db,
-                    user.id, // Geometry Dash user ID
-                    decoded.claims.id, // Discord user ID
-                ).await,
+                Ok(decoded) => {
+                    migrate_account(
+                        &db,
+                        user.id,           // Geometry Dash user ID
+                        decoded.claims.id, // Discord user ID
+                    )
+                    .await
+                }
                 Err(_) => util::str_response(StatusCode::UNAUTHORIZED, "Invalid link token"),
             }
         }

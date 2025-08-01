@@ -162,7 +162,7 @@ impl Database {
 
     pub async fn find_or_create_user_discord(
         &self,
-        discord_id: &str,
+        discord_id: i64,
         username: &str,
     ) -> Result<User, sqlx::Error> {
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE discord_id = $1")
