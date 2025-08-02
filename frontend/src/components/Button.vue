@@ -9,7 +9,8 @@ defineEmits(['click']);
 </script>
 
 <template>
-  <a :href="props.url" :target="props.newTab && '_blank' || undefined" :class="{ 'dark-button': props.isDark }" @click="$emit('click')">
+  <a :href="props.url" :target="props.newTab && '_blank' || undefined" :class="{ 'dark-button': props.isDark }"
+     @click="$emit('click')">
     <slot></slot>
   </a>
 </template>

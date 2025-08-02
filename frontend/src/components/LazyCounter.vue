@@ -24,7 +24,8 @@ function animateCounter(
     start: number,
     end: number,
     duration: number = 1000,
-    onUpdate: (value: number) => void = () => {}
+    onUpdate: (value: number) => void = () => {
+    }
 ) {
   let startTime: number | null = null;
 

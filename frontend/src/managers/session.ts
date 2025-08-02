@@ -58,6 +58,6 @@ export default class SessionManager {
     public static logout(): void {
         sessionStorage.removeItem('user');
         document.cookie = 'auth_role=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-        useRouter().replace({ path: '/' });
+        useRouter().replace({path: '/'});
     }
 }

@@ -11,7 +11,7 @@ import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 
 const CLIENT_ID = "1398022313877704764";
-const REDIRECT_URI = "http://localhost:3000/auth/discord";
+const REDIRECT_URI = `${window.location.origin}/auth/discord`;
 const DISCORD_AUTH_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=identify`;
 
 const stats = ref({

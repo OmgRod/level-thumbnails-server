@@ -123,7 +123,7 @@ html, body {
 
 @media (max-width: 768px) {
     .mobile-only {
-        display: block!important;
+        display: block !important;
     }
 }
 
@@ -137,27 +137,35 @@ html, body {
     font-size: 1rem;
     transition: background-color 0.3s ease;
 }
+
 .btn-primary {
     background-color: #007bff;
 }
+
 .btn-primary:hover {
     background-color: #0056b3;
 }
+
 .btn-success {
     background-color: #28a745;
 }
+
 .btn-success:hover {
     background-color: #218838;
 }
+
 .btn-danger {
     background-color: #dc3545;
 }
+
 .btn-danger:hover {
     background-color: #c82333;
 }
+
 .btn-secondary {
     background-color: #6c757d;
 }
+
 .btn-secondary:hover {
     background-color: #5a6268;
 }

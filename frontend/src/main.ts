@@ -8,8 +8,8 @@ import routes from './routes'
 import SessionManager from './managers/session'
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
+    history: createWebHistory(),
+    routes,
 })
 
 router.beforeEach((to, _from, next) => {

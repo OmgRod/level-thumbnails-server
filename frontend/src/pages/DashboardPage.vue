@@ -262,7 +262,7 @@ main {
 
   .sidebar {
     width: calc(100% - 20px);
-    height: fit-content!important;
+    height: fit-content !important;
     position: fixed;
     bottom: 0;
     z-index: 1000;
