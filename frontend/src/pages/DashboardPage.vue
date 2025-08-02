@@ -85,15 +85,18 @@ main {
 
 .sidebar {
   width: 250px;
+  height: calc(100svh - 40px);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  position: fixed;
+  left: 0;
 }
 
 .content {
   flex: 1;
   padding: 20px;
-  margin: 20px 20px 20px 0;
+  margin: 20px 20px 20px 290px;
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 12px;
 }
@@ -250,8 +253,16 @@ main {
 /* mobile layout */
 
 @media (max-width: 768px) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.5) transparent;
+    -ms-overflow-style: none; /* IE and Edge */
+    overflow-y: scroll;
+  }
+
   .sidebar {
     width: calc(100% - 20px);
+    height: fit-content!important;
     position: fixed;
     bottom: 0;
     z-index: 1000;

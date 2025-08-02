@@ -73,11 +73,11 @@ function verifyAccount() {
       <div class="d-flex">
         <input type="text" v-model="token" class="flex-3 link-token" placeholder="Your secret token will appear here"
                readonly/>
-        <button @click="copyToken" class="secondary-bg flex-1 link-account" :disabled="loadingToken">
+        <button @click="copyToken" class="btn btn-secondary flex-1 link-account" :disabled="loadingToken">
           {{ token ? "Copy Token" : "Link Account" }}
         </button>
       </div>
-      <button @click="verifyAccount" class="success-bg w-100 mt-1">
+      <button @click="verifyAccount" class="btn btn-success w-100 mt-1">
         Verify Account
       </button>
       <p v-if="linkingError" class="error-message">
@@ -91,16 +91,16 @@ function verifyAccount() {
         Learn more in our <a href="/privacy" target="_blank">Privacy Policy</a>.
       </p>
       <div class="d-flex gap-1">
-        <button @click="downloadMyData" class="primary-bg flex-1">
+        <button @click="downloadMyData" class="btn btn-primary flex-1">
           Request My Data
         </button>
-        <button @click="deleteAccount" class="danger-bg flex-1">
+        <button @click="deleteAccount" class="btn btn-danger flex-1">
           Delete My Account
         </button>
       </div>
     </section>
     <section class="mobile-only">
-      <button @click="SessionManager.logout()" class="logout-button w-100">
+      <button @click="SessionManager.logout()" class="btn btn-black logout-button w-100">
         <img src="/icons/logout.svg" alt="Logout" class="avatar"/>
         Logout
       </button>
@@ -143,7 +143,6 @@ h3 {
 }
 
 button {
-  background-color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,35 +161,13 @@ button > img {
   margin-right: 10px;
 }
 
-.primary-bg {
-  background-color: #007bff;
+.btn-black {
+  background-color: #000;
+  color: #fff;
 }
 
-.danger-bg {
-  background-color: #dc3545;
+.btn-black:hover {
+  background-color: #333;
 }
 
-.secondary-bg {
-  background-color: #6c757d;
-}
-
-.success-bg {
-  background-color: #28a745;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-button.danger-bg:hover {
-  background-color: #c82333;
-}
-
-button.secondary-bg:hover {
-  background-color: #5a6268;
-}
-
-button.success-bg:hover {
-  background-color: #218838;
-}
 </style>
