@@ -62,9 +62,13 @@ pub struct UploadExtended {
 pub struct PendingUpload {
     pub id: i64,
     pub user_id: i64,
+    pub username: String,
     pub level_id: i64,
     pub accepted: bool,
     pub upload_time: NaiveDateTime,
+
+    #[sqlx(skip)]
+    pub replacement: bool,
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
@@ -236,9 +240,10 @@ impl Database {
 
     pub async fn get_pending_uploads(&self) -> Result<Vec<PendingUpload>, sqlx::Error> {
         sqlx::query_as::<_, PendingUpload>(
-            "SELECT id, user_id, level_id, accepted, upload_time FROM uploads
+            "SELECT uploads.id, user_id, username, level_id, accepted, upload_time FROM uploads
+             LEFT JOIN users ON users.id = user_id
              WHERE accepted = FALSE AND accepted_time IS NULL
-             ORDER BY upload_time DESC",
+             ORDER BY upload_time",
         )
         .fetch_all(&*self.pool)
         .await
@@ -249,9 +254,10 @@ impl Database {
         level_id: i64,
     ) -> Result<Vec<PendingUpload>, sqlx::Error> {
         sqlx::query_as::<_, PendingUpload>(
-            "SELECT id, user_id, level_id, accepted, upload_time FROM uploads
+            "SELECT uploads.id, user_id, username, accepted, upload_time FROM uploads
+                 LEFT JOIN users ON users.id = user_id
                  WHERE accepted = FALSE AND accepted_time IS NULL AND level_id = $1
-                 ORDER BY upload_time DESC",
+                 ORDER BY upload_time",
         )
         .bind(level_id)
         .fetch_all(&*self.pool)
@@ -263,9 +269,10 @@ impl Database {
         user_id: i64,
     ) -> Result<Vec<PendingUpload>, sqlx::Error> {
         sqlx::query_as::<_, PendingUpload>(
-            "SELECT id, user_id, level_id, accepted, upload_time FROM uploads
+            "SELECT uploads.id, user_id, username, level_id, accepted, upload_time FROM uploads
+             LEFT JOIN users ON users.id = user_id
              WHERE accepted = FALSE AND accepted_time IS NULL AND user_id = $1
-             ORDER BY upload_time DESC",
+             ORDER BY upload_time",
         )
         .bind(user_id)
         .fetch_all(&*self.pool)
@@ -274,8 +281,9 @@ impl Database {
 
     pub async fn get_pending_upload(&self, id: i64) -> Result<PendingUpload, sqlx::Error> {
         sqlx::query_as::<_, PendingUpload>(
-            "SELECT id, user_id, level_id, accepted, upload_time FROM uploads
-             WHERE accepted = FALSE AND accepted_time IS NULL AND id = $1",
+            "SELECT uploads.id, user_id, username, level_id, accepted, upload_time FROM uploads
+             LEFT JOIN users ON users.id = user_id
+             WHERE accepted = FALSE AND accepted_time IS NULL AND uploads.id = $1",
         )
         .bind(id)
         .fetch_one(&*self.pool)

@@ -1,5 +1,5 @@
 use crate::{cache_controller, database, util};
-use axum::Form;
+use axum::Json;
 use axum::body::Bytes;
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode, header};
@@ -202,11 +202,17 @@ async fn get_pending_uploads(
     };
 
     match uploads_result {
-        Ok(uploads) => Response::builder()
-            .status(StatusCode::OK)
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(serde_json::to_string(&uploads).unwrap().into())
-            .unwrap(),
+        Ok(mut uploads) => {
+            for upload in &mut uploads {
+                upload.replacement = is_image_uploaded(upload.level_id as u64).await;
+            }
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(serde_json::to_string(&uploads).unwrap().into())
+                .unwrap()
+        }
         Err(e) => util::str_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             &format!("Error fetching pending uploads: {}", e),
@@ -270,7 +276,7 @@ pub async fn pending_action(
     headers: HeaderMap,
     State(db): State<database::Database>,
     Path(id): Path<i64>,
-    Form(action): Form<PendingUploadAction>,
+    Json(action): Json<PendingUploadAction>,
 ) -> Response {
     let user = match authenticate_moderator(&headers, &db).await {
         Ok(user) => user,
