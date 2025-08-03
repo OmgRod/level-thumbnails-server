@@ -33,6 +33,11 @@ html, body {
     touch-action: manipulation;
 }
 
+.px-2 {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
 .mt-5 {
     margin-top: 5rem;
 }
