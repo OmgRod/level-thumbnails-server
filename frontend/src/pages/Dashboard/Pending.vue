@@ -115,7 +115,13 @@ async function thumbnailAction(id: number, accept: boolean) {
                  placeholder="Reason for rejection" list="rejectReasons"/>
 
           <datalist id="rejectReasons">
-            <option value="Visible progress bar / percentage"/>
+            <option value="Progress bar/percentage"/>
+            <option value="Using Noclip"/>
+            <option value="Low Quality"/>
+            <option value="JPEGgy"/>
+            <option value="Stretched"/>
+            <option value="Title Card"/>
+            <option value="Overlays"/>
           </datalist>
 
           <button @click="thumbnailAction(selectedItem!.id, false)" class="btn btn-danger flex-1">
