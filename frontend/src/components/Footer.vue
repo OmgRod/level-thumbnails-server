@@ -4,7 +4,11 @@
 
 <template>
   <footer class="footer">
-    <p>&copy; {{ new Date().getFullYear() }} Level Thumbnails.</p>
+    <p>
+      <router-link to="/privacy">Privacy Policy</router-link> |
+      <router-link to="/terms">Terms of Service</router-link>
+    </p>
+    <p>&copy; {{ new Date().getFullYear() }} Level Thumbnails</p>
   </footer>
 </template>
 
@@ -17,7 +21,7 @@
 }
 
 .footer a {
-  color: #00aaff;
+  color: #89c0ea;
   text-decoration: none;
 }
 
